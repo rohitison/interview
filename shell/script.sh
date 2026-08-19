@@ -1,10 +1,13 @@
-STDOUT="/dev/stdout"
-LOG_FILE='$STDOUT'
-LOG_MESSAGE='is the date, should log to $STDOUT'
+#!/usr/bin/env bash
 
-# log with timestamp
+set -euo pipefail
+
 log_message() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOGFILE"
+    local message="$1"
+
+    printf '[%s] %s\n' \
+        "$(date '+%Y-%m-%d %H:%M:%S')" \
+        "$message"
 }
 
-log_message $LOG_MESSAGE
+log_message "Deployment started"
