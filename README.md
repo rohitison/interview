@@ -1,36 +1,76 @@
+# DevOps Interview Solution
 
-# Interviews
+This repository contains my solution for the Kubernetes deployment and DevOps review exercise.
 
-## This repo contains tasks we request interviewees to complete
+The solution uses a local Kubernetes cluster with Kind and demonstrates:
 
-* This repository should be forked, candidates should work in their own forked versions.
-Please don't open pull requests with solutions agains this repository.
-* No tasks require the use of any paid services.
-* For all of the following tasks please use your favourite tools.
-* During the interview the interviewee guides us through
-their solution. Explaining decisions and technical concepts as we go.
-* Tasks can be solved in a very simplistic way or as complicated as you can imagine.
-Both can be valid.
+- Docker containerization
+- Kubernetes deployment
+- CI validation
+- Automated releases
+- Semantic Versioning
+- Changelog management
+- Review and improvement of the provided shell script and Kubernetes manifest
 
-### k8s deployment
+No cloud infrastructure is required.
 
-* please don't use cloud infra providers like AWS, GCP etc. The cluster should
-be a local one.
-  
-1. Set up a kubernetes cluster ie. kind, minikube, k3s etc.
-the one you like the most.
-2. Build and release an app. This application should have a dockerfile created
-by you and it should be built by you. This can be something very simple,
-ie traefik/whoami, hashicorp/http-echo, your own if you have one.
-Each release should happen automatically.
-3. Create a deployment of this app.
+---
 
-* extras: IaC, GitOps, semver, changelog
+## Architecture
 
-### review
+### CI / Release
 
-* please review [shellscript](shell/script.sh)
+```text
+                         GitHub
+                           |
+                       git push
+                           |
+                           v
+                +----------------------+
+                |    GitHub Actions    |
+                |         CI           |
+                +----------------------+
+                   |                |
+                   v                v
+             Docker build     K8s validation
+                   |
+             git tag v1.0.0
+                   |
+                   v
+                +----------------------+
+                |    GitHub Actions    |
+                |       Release        |
+                +----------------------+
+                           |
+                           v
+                         GHCR
+                           |
+                           v
+              Versioned container image
 
-* please review [deployment](k8s/nginx.yaml)
+Local Kubernetes
 
-* extras: proper explanation
+                  Docker Image
+                       |
+                       v
+              +-------------------+
+              |   Kind Cluster    |
+              |                   |
+              |  Control Plane    |
+              |                   |
+              |  +-------------+  |
+              |  |   Worker 1  |  |
+              |  |    Pod 1    |  |
+              |  +-------------+  |
+              |                   |
+              |  +-------------+  |
+              |  |   Worker 2  |  |
+              |  |    Pod 2    |  |
+              |  +-------------+  |
+              |         |         |
+              |         v         |
+              |  +-------------+  |
+              |  |  ClusterIP  |  |
+              |  |   Service   |  |
+              |  +-------------+  |
+              +-------------------+
