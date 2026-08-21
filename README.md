@@ -2,15 +2,7 @@
 
 This repository contains my solution for the Kubernetes deployment and DevOps review exercise.
 
-The solution uses a local Kubernetes cluster with Kind and demonstrates:
-
-- Docker containerization
-- Kubernetes deployment
-- CI validation
-- Automated releases
-- Semantic Versioning
-- Changelog management
-- Review and improvement of the provided shell script and Kubernetes manifest
+I kept the setup local using Kind and focused on the requested areas: Docker, Kubernetes, CI/CD, releases, versioning, and the review of the provided shell script and Kubernetes manifest.
 
 No cloud infrastructure is required.
 
@@ -78,9 +70,7 @@ No cloud infrastructure is required.
               +-------------------+
 ```
 
-The CI/release flow and the local Kubernetes environment are intentionally separate.
-
-GitHub Actions builds and publishes the release image to GHCR, while Kind is used locally to run and test the application.
+GitHub Actions handles CI and releases. Kind is used locally to run and test the application.
 
 ---
 
@@ -107,63 +97,27 @@ GitHub Actions builds and publishes the release image to GHCR, while Kind is use
 
 ---
 
-## Tools Used
+## Running Locally
 
-- Docker
-- Kubernetes
-- Kind
-- kubectl
-- GitHub Actions
-- GitHub Container Registry (GHCR)
-- kubeconform
-- Semantic Versioning
-
----
-
-## Application
-
-The application is intentionally simple. The focus of the exercise is the DevOps workflow rather than application complexity.
-
-It is a small HTML page served by Nginx.
-
-The Dockerfile was created specifically for this exercise.
-
-Build the image locally:
-
-```bash
-docker build -t devops-interview-app:1.0.0 ./app
-```
-
-The image was tested locally before deploying it to Kubernetes.
-
----
-
-## Local Kubernetes Setup
-
-Kind is used to create a local multi-node Kubernetes cluster.
-
-The cluster contains:
-
-- 1 control-plane node
-- 2 worker nodes
-
-Create the cluster:
+Create the Kind cluster:
 
 ```bash
 kind create cluster --config kind/cluster.yaml
 ```
 
-Verify the nodes:
+Check the nodes:
 
 ```bash
 kubectl get nodes
 ```
 
----
+Build the application image:
 
-## Kubernetes Deployment
+```bash
+docker build -t devops-interview-app:1.0.0 ./app
+```
 
-Because the Docker image is built locally, it needs to be loaded into the Kind nodes:
+Load the image into Kind:
 
 ```bash
 kind load docker-image devops-interview-app:1.0.0 --name devops-interview
@@ -175,11 +129,9 @@ Deploy the application:
 kubectl apply -f k8s/nginx.yaml
 ```
 
-Check the deployment:
+Check the rollout:
 
 ```bash
-kubectl get pods -o wide
-kubectl get service
 kubectl rollout status deployment/devops-interview-app
 ```
 
@@ -197,27 +149,20 @@ curl http://localhost:8080
 
 ---
 
-## Kubernetes Design
+## Kubernetes
 
-The Deployment runs two replicas.
-
-I used two replicas mainly to demonstrate basic redundancy, rolling updates and Kubernetes self-healing.
-
-The Deployment also includes:
+The Deployment runs two replicas and includes:
 
 - Rolling update strategy
-- Readiness probe
-- Liveness probe
+- Readiness and liveness probes
 - CPU and memory requests/limits
 - Versioned container image
 
-The application is exposed using a `ClusterIP` Service because external access is not required for this exercise.
+The application is exposed through a `ClusterIP` Service.
 
-I also tested self-healing by deleting a running Pod and verifying that Kubernetes created a replacement.
+I also tested Kubernetes self-healing by deleting a running Pod and verifying that a replacement was created.
 
-### Rolling update
-
-The Deployment uses:
+The rolling update configuration is:
 
 ```yaml
 strategy:
@@ -227,13 +172,11 @@ strategy:
     maxSurge: 1
 ```
 
-This allows a new Pod to be created before an old Pod is removed while keeping the configured replicas available during the rollout.
-
 ---
 
 ## CI
 
-The CI workflow is located at:
+The CI workflow is:
 
 ```text
 .github/workflows/ci.yml
@@ -241,75 +184,42 @@ The CI workflow is located at:
 
 It runs on pushes and pull requests.
 
-The workflow currently:
+It currently:
 
 1. Checks out the repository
 2. Builds the Docker image
-3. Validates the Kubernetes manifest using kubeconform
+3. Validates the Kubernetes manifest with kubeconform
 
-The CI job does not depend on the local Kind cluster. This keeps the CI environment independent from my local machine.
+The CI job does not depend on the local Kind cluster.
 
 ---
 
-## Automated Release
+## Release
 
-The release workflow is located at:
+The release workflow is:
 
 ```text
 .github/workflows/release.yml
 ```
 
-A release is triggered by a Semantic Versioning Git tag.
-
-For example:
+A release is triggered by a Semantic Versioning Git tag:
 
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-The release workflow then:
+The workflow builds the image, pushes the versioned image to GHCR, and creates a GitHub Release.
 
-1. Extracts the version from the tag
-2. Builds the Docker image
-3. Pushes the versioned image to GHCR
-4. Creates a GitHub Release
-
-The resulting image is:
+Example:
 
 ```text
 ghcr.io/rohitison/devops-interview-app:1.0.0
 ```
 
-I use versioned image tags instead of `latest` so that each release points to a specific and traceable image.
+I use versioned image tags rather than `latest` so that each release points to a specific image.
 
----
-
-## Semantic Versioning & Changelog
-
-The project follows:
-
-```text
-MAJOR.MINOR.PATCH
-```
-
-For example:
-
-```text
-1.0.0
-```
-
-The general approach is:
-
-- `MAJOR` — breaking changes
-- `MINOR` — backward-compatible features
-- `PATCH` — backward-compatible fixes
-
-Release changes are documented in:
-
-```text
-CHANGELOG.md
-```
+Release changes are documented in `CHANGELOG.md`.
 
 ---
 
@@ -319,12 +229,12 @@ The original `shell/script.sh` had several issues:
 
 - Missing shebang
 - Inconsistent variable names
-- Incorrect variable expansion caused by quoting
+- Incorrect variable expansion
 - `LOG_FILE` / `LOGFILE` mismatch
 - Incorrect logging destination
 - No strict shell error handling
 
-I changed the script to use:
+I changed it to use:
 
 ```bash
 #!/usr/bin/env bash
@@ -333,7 +243,7 @@ set -euo pipefail
 
 and timestamped logging with `printf`.
 
-The main goal was to make the script predictable, fail fast, and easier to maintain.
+The main goal was to make the script fail fast and easier to maintain.
 
 ---
 
@@ -353,7 +263,7 @@ The original Kubernetes manifest had several issues:
 
 I corrected these issues while keeping the manifest relatively simple.
 
-One Kubernetes detail worth mentioning is that `containerPort` is metadata; setting it to `8000` does not make Nginx listen on port `8000`. The actual issue was the mismatch between the declared port and the port where the application listens.
+One Kubernetes detail worth noting is that `containerPort` is metadata. Setting it to `8000` does not make Nginx listen on port `8000`; the actual problem was the mismatch between the declared port and the port used by the application.
 
 ---
 
@@ -361,11 +271,11 @@ One Kubernetes detail worth mentioning is that `containerPort` is metadata; sett
 
 ### Why Kind?
 
-The assignment requires a local Kubernetes cluster. Kind provides a simple multi-node Kubernetes environment using Docker.
+The exercise requires a local Kubernetes cluster. Kind provides a simple multi-node Kubernetes environment using Docker.
 
 ### Why two replicas?
 
-Two replicas provide basic redundancy and allow rolling updates and self-healing to be demonstrated.
+Two replicas allow basic redundancy, rolling updates, and self-healing to be demonstrated.
 
 ### Why ClusterIP?
 
@@ -373,26 +283,12 @@ The application does not need to be exposed outside the cluster for this exercis
 
 ### Why versioned images?
 
-Versioned image tags make releases easier to trace and reproduce compared with using a mutable `latest` tag.
+Versioned image tags make releases easier to trace and reproduce than a mutable `latest` tag.
 
 ### Why separate CI and Release?
 
-CI validates changes on pushes and pull requests.
-
-A release only happens when a version tag is created. This keeps normal development changes separate from published release artifacts.
+CI validates normal changes. A release only happens when a version tag is created.
 
 ### Why not Terraform or GitOps?
 
-They were not required for this exercise.
-
-The cluster configuration and Kubernetes desired state are already stored declaratively in Git. I preferred to keep the solution focused rather than introduce additional tooling just to make the solution more complex.
-
-For a larger production environment, Terraform and a GitOps tool such as Argo CD or Flux could be appropriate depending on the infrastructure and deployment model.
-
----
-
-## Final Notes
-
-The solution intentionally stays relatively small.
-
-The goal was to solve the requested tasks cleanly and make the important decisions easy to explain during the interview, rather than adding infrastructure that is not required for the exercise.
+They were not required for this exercise. The cluster configuration and Kubernetes desired state are already stored declaratively in Git, so I kept the implementation focused rather than adding more tooling.
