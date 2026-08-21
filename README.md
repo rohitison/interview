@@ -2,7 +2,7 @@
 
 This repository contains my solution for the Kubernetes deployment and DevOps review exercise.
 
-I kept the setup local using Kind and focused on the requested areas: Docker, Kubernetes, CI/CD, releases, versioning, and the review of the provided shell script and Kubernetes manifest.
+I kept the setup local with Kind and focused on the main areas of the exercise: Docker, Kubernetes, CI/CD, releases, versioning, and the review of the provided shell script and Kubernetes manifest.
 
 No cloud infrastructure is required.
 
@@ -13,7 +13,7 @@ No cloud infrastructure is required.
 ### CI / Release
 
 ```text
-                         GitHub
+                          GitHub
                            |
                        git push
                            |
@@ -25,10 +25,11 @@ No cloud infrastructure is required.
                    |                |
                    v                v
              Docker build     K8s validation
-                   |
-             git tag v1.0.0
-                   |
-                   v
+
+
+                         git tag v1.0.0
+                                |
+                                v
                 +----------------------+
                 |    GitHub Actions    |
                 |       Release        |
@@ -39,8 +40,7 @@ No cloud infrastructure is required.
                            |
                            v
               Versioned container image
-```
-
+              
 ### Local Kubernetes
 
 ```text
@@ -243,7 +243,7 @@ set -euo pipefail
 
 and timestamped logging with `printf`.
 
-The main goal was to make the script fail fast and easier to maintain.
+The main goals were to make the script fail fast and keep it easier to maintain.
 
 ---
 
