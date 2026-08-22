@@ -23,4 +23,4 @@ resource "null_resource" "kind_cluster" {
     when    = destroy
     command = "kind delete cluster --name '${var.cluster_name}'"
   }
-}
+}   
