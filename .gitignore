@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+
+# Terraform lock file should be committed
+# .terraform.lock.hcl
+
+# IDE / editor
+.vscode/
